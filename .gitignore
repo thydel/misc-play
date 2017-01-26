@@ -1,0 +1,27 @@
+*~
+
+.cache/
+.retry/
+.hide/
+
+roles/
+log/
+tmp/
+ext/
+site/
+
+README.html
+plugins/filter/*.pyc
+
+# fetched gist
+ansible.mk
+gist-helper.mk
+github-helper.mk
+init-play-dir.yml
+
+# generated
+ansible.cfg
+ssh-config
+vars/ext/
+inventory/*.ext
+inventory/group_vars/*/*-ext.yml

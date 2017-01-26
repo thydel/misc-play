@@ -1,0 +1,4 @@
+# -*- Mode: conf; -*-
+# Ansible managed
+
+local ansible_connection=local ansible_become_pass="{{ lookup('pipe', 'pass node/local') }}"
