@@ -1,0 +1,40 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: local
+
+  vars:
+
+    repo: https://github.com/stedolan/jq.git
+    basedir: tmp/jq
+    deps:
+      - [ autoconf, autoconf-archive, autoconf-doc, automake, autotools-dev ]
+      - [ build-essential, g++, gettext, gnu-standards, libtool ]
+    commands:
+      - [ autoreconf, autoreconf -i,                         Makefile.in,       False ]
+      - [ configue,   ./configure --disable-maintainer-mode, config.log,        False ]
+      - [ make,       make,                                  jq,                False ]
+      - [ install,    make install,                          /usr/local/bin/jq, True ]
+
+  tasks:
+
+    - git: { repo: '{{ repo }}', dest: '{{ basedir }}' }
+      name: get sources
+      tags: git
+
+    - apt: { name: '{{ item }}' }
+      with_flattened: '{{ deps }}'
+      become: True
+      name: install dependencies
+      tags: apt
+
+    - with_nested: [ '{{ commands }}' ]
+      loop_control: { label: '{{ item[0] }}' }
+      become: '{{ item[3] }}'
+      command: '{{ item[1] }}'
+      args:
+        chdir: '{{ basedir }}'
+        creates: '{{ item[2] }}'
+      tags: install
+      name: configure compile and install jq
+
