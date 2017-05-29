@@ -1,0 +1,15 @@
+---
+
+- hosts: localhost
+  gather_facts: False
+  
+  tasks:
+
+    - apt-repository:
+        repo: deb http://ftp.debian.org/debian jessie-backports main contrib non-free
+        update_cache: True
+    - apt:
+        name: '{{ item }}'
+        default_release: jessie-backports
+      with_items: [ linux-image, linux-image-amd64 ]
+      
