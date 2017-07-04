@@ -1,0 +1,33 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: all
+  gather_facts: False
+  user: root
+
+  tasks:
+
+    - user:
+        name: thy
+        groups: sudo
+        append: True
+      tags: user
+      
+    - lineinfile:
+        dest: /etc/sudoers.d/thy
+        create: True
+        line: Defaults:thy env_keep += HOME
+        mode: 0440
+      tags: sudo
+
+    - apt:
+        name: '{{ item }}'
+        state: latest
+        update_cache: True
+        cache_valid_time: 300
+      with_flattened:
+        - [ aptitude, apt-file, deborphan ]
+        - [ parted, lvm2 ]
+        - [ htop, nload ]
+        - [ mercurial, make ]
+      tags: apt
