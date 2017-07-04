@@ -1,0 +1,5 @@
+---
+
+- src: https://github.com/thydel/ar-regenerate-host-keys.git
+  name: regenerate-host-keys
+  version: master
