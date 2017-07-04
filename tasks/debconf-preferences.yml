@@ -1,0 +1,13 @@
+---
+
+- name: debconf preferences
+
+  with_items:
+    - { question: frontend, value: Readline }
+    - { question: priority, value: high }
+
+  debconf:
+    name: debconf
+    question: debconf/{{ item.question }}
+    value: '{{ item.value }}'
+    vtype: select
