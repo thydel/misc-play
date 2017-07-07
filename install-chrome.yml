@@ -1,0 +1,36 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: all
+  gather_facts: True
+
+  vars:
+    url: https://dl-ssl.google.com/linux/linux_signing_key.pub
+    repo: deb http://dl.google.com/linux/chrome/deb/ stable main
+
+  tasks:
+    
+    - name: see if on dektop
+      stat: { path: /usr/bin/mate-about }
+      register: mate
+
+    - name: avoid flood
+      assert: { that: mate.stat.exists is defined and mate.stat.exists }
+
+    - name: add google key
+      apt_key: { url: '{{ url }}' }
+    
+    - name: add chrome repos
+      apt_repository: { repo: '{{ repo }}' }
+    
+    - name: install chrome stable version
+      apt:
+        name: google-chrome-stable
+        update_cache: True
+        cache_valid_time: 300
+    
+    # installing goole-chrome auto add /etc/apt/sources.list.d/google-chrome.list
+    - name: fix duplicate sources list
+      file:
+        path: /etc/apt/sources.list.d/dl_google_com_linux_chrome_deb.list
+        state: absent
