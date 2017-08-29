@@ -1,0 +1,38 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: all
+  gather_facts: False
+  become: True
+
+  vars:
+
+    apps:
+      name: typora
+      repo: deb http://typora.io linux/
+      key:
+        id: BA300B7755AFCFAE
+        server: keyserver.ubuntu.com
+
+  tasks:
+    
+    - name: see if on dektop
+      stat: { path: /usr/bin/mate-about }
+      register: mate
+
+    - name: avoid flood
+      assert: { that: mate.stat.exists is defined and mate.stat.exists }
+
+    - name: add key
+      apt_key:
+        id: '{{ apps.key.id }}'
+        keyserver: '{{ apps.key.server }}'
+
+    - name: add repos
+      apt_repository: { repo: '{{ apps.repo }}' }
+    
+    - name: install apps
+      apt:
+        name: '{{ apps.name }}'
+        update_cache: True
+        cache_valid_time: 300
