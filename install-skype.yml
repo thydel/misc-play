@@ -1,0 +1,70 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: all
+  gather_facts: False
+
+  tasks:
+    
+    - tags: assert_desktop
+      vars:
+        desktops:
+          - /usr/bin/gnome-session
+          - /usr/bin/mate-session
+        a_desktop: 1
+      block:
+        - debug: { msg: fail if not on a dektop node }
+        - stat: { path: '{{ desktops[a_desktop] }}' }
+          register: desktop
+        - assert: { that: desktop.stat.exists is defined and desktop.stat.exists }
+
+    - tags: assert_local_group
+      vars: { group: staff }
+      block:
+        - debug: { msg: 'fail if invoking user ({{ ansible_ssh_user }}) not in group {{ group }}' }
+        - getent:
+            database: group
+            key: '{{ group }}'
+            split: ':'
+        - set_fact:
+            users: |
+              {{ getent_group[group] | difference([0, 1] | map('extract', getent_group[group]) | list) }}
+        - assert:
+            that: users | intersect([ ansible_ssh_user ]) | length > 0
+
+    - tags: get
+      vars: &deb
+        debdir: /usr/local/dist
+        deb: skypeforlinux-64.deb
+        url: https://go.skype.com/{{ deb }}
+      when: &gdebi use_apt is not defined
+      block:
+        - debug: { msg: 'get url {{ url }} to {{ debdir }}/{{ deb }}' }
+        - file:
+            path: '{{ debdir }}'
+            group: staff
+            mode: g+ws
+          become: True
+        - get_url:
+            url: '{{ url }}'
+            dest: '{{ debdir }}/{{ deb }}'
+
+    - tags: gdebi
+      vars:
+        <<: *deb
+        bin: /usr/bin/skypeforlinux
+      when: *gdebi
+      become: True
+      block:
+        - debug: { msg: 'install {{ debdir }}/{{ deb }} using gdebi' }
+        - apt: { name: gdebi }
+        - command: gdebi -n {{ debdir }}/{{ deb }}
+          args: { creates: '{{ bin }}' }
+      
+    - tags: apt
+      vars: *deb
+      when: use_apt is defined
+      block:
+        - debug: { msg: 'install {{ url }}' }
+        - apt: { deb: '{{ url }}' }
+          become: True
