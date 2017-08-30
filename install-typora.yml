@@ -9,7 +9,7 @@
 
     apps:
       name: typora
-      repo: deb http://typora.io linux/
+      repo: deb http://typora.io/linux ./
       key:
         id: BA300B7755AFCFAE
         server: keyserver.ubuntu.com
