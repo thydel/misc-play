@@ -1,0 +1,22 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: all
+  gather_facts: False
+  user: root
+
+  tasks:
+
+    - name: install basic tools
+      apt:
+        name: '{{ item }}'
+        state: latest
+        update_cache: True
+        cache_valid_time: 300
+      with_flattened:
+        - [ aptitude, apt-file, deborphan ]
+        - [ parted, lvm2 ]
+        - [ htop, nload ]
+        - [ mercurial, git, make ]
+        - [ dialog ]
+      tags: apt

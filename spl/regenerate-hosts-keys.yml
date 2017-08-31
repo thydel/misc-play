@@ -1,0 +1,17 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: 'g_new:g_tst:!poweroff'
+  gather_facts: False
+
+  vars:
+    net: admin2
+    bastion: super1
+  roles:
+    - role: regenerate-host-keys
+      template: fetched/debian8.epiconcept.fr
+      key: /etc/ssh/ssh_host_rsa_key.pub
+      tags: regenerate
+      become: True
+    - role: fill-know_hosts
+      tags: fill
