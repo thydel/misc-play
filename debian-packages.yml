@@ -1,0 +1,41 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: all
+  gather_facts: False
+
+  tasks:
+    
+    - include_vars:
+        file: vars/debian-packages.yml
+        name: debian_packages
+
+    - include: tasks/assert-desktop.yml
+
+    - apt_repository: { repo: '{{ repo }}' }
+      become: True
+      vars: { repo: 'deb http://ftp.debian.org/debian stretch-backports main' }
+      name: add repo "{{ repo }}"
+
+    - apt: { name: '{{ package.name }}' }
+      with_items: '{{ debian_packages.self | json_query(queries[query]) }}'
+      loop_control:
+        loop_var: package
+        label: '{{ package.name }}: {{ package.desc }}'
+      become: True
+      vars:
+        query: |-
+          {{ tag | default('base') }}
+        query_sample: '[? contains(tags, `base`)].{ name: name, desc: desc }'
+        queries: |
+          {% set queries = {} %}
+          {% set tags = [ "base", "desktop", "system" ] %}
+          {% set qpre = "[? contains(tags, `" %}
+          {% set qpost = "`)].{ name: name, desc: desc }" %}
+          {% for tag in tags %}
+          {%   do queries.update({tag: qpre ~ tag ~ qpost }) %}
+          {% endfor %}
+          {{ queries }}
+        names: '[].name'
+        sep: ', '
+      name: install selected package from "{{ debian_packages.self | json_query(names) | join(sep) }}"

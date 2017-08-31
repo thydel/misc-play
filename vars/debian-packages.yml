@@ -1,0 +1,57 @@
+---
+
+self:
+
+  - name: emacs25-lucid
+    vers: stretch
+    desc: GNU Emacs editor (with Lucid GUI support)
+    home: &emacs https://www.gnu.org/software/emacs/
+    tags: [ base, desktop ]
+
+  - name: emacs25-nox
+    vers: stretch
+    desc: GNU Emacs editor (without GUI support)
+    home: *emacs
+    tags: [ nox ]
+
+  - name: screen
+    vers: stretch
+    desc: terminal multiplexer with VT100/ANSI terminal emulation
+    home: https://packages.debian.org/stretch/screen
+    tags: [ base ]
+
+  - name: make-guile
+    vers: stretch
+    desc: utility for directing compilation with guile support
+    home: &make https://www.gnu.org/software/make/
+    tags: [ base ]
+
+  - name: make-doc
+    vers: stretch
+    desc: Documentation for the GNU version of the "make" utility
+    home: *make
+    tags: [ base, non-free ]
+
+  - name: clipit
+    vers: stretch
+    desc: lightweight GTK+ clipboard manager
+    home: http://clipit.rspwn.com/
+    tags: [ desktop ]
+
+  - name: guake
+    vers: stretch
+    desc: Drop-down terminal for GNOME Desktop Environment
+    home: http://guake-project.org/
+    tags: [ desktop ]
+
+  - name: tilix
+    vers: stretch-backports
+    desc: Tiling terminal emulator for GNOME
+    home: https://gnunn1.github.io/tilix-web/
+    tags: [ desktop, backport ]
+
+  - name: netdata
+    vers: stretch-backports
+    desc: real-time charts for system monitoring
+    home: https://github.com/firehol/netdata
+    tags: [ system, backport ]
