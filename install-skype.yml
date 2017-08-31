@@ -6,31 +6,8 @@
 
   tasks:
     
-    - tags: assert_desktop
-      vars:
-        desktops:
-          - /usr/bin/gnome-session
-          - /usr/bin/mate-session
-        a_desktop: 1
-      block:
-        - debug: { msg: fail if not on a dektop node }
-        - stat: { path: '{{ desktops[a_desktop] }}' }
-          register: desktop
-        - assert: { that: desktop.stat.exists is defined and desktop.stat.exists }
-
-    - tags: assert_local_group
-      vars: { group: staff }
-      block:
-        - debug: { msg: 'fail if invoking user ({{ ansible_ssh_user }}) not in group {{ group }}' }
-        - getent:
-            database: group
-            key: '{{ group }}'
-            split: ':'
-        - set_fact:
-            users: |
-              {{ getent_group[group] | difference([0, 1] | map('extract', getent_group[group]) | list) }}
-        - assert:
-            that: users | intersect([ ansible_ssh_user ]) | length > 0
+    - include: tasks/assert-desktop.yml
+    - include: tasks/assert-local-group.yml
 
     - tags: get
       vars: &deb
