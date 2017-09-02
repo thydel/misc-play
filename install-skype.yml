@@ -45,3 +45,6 @@
         - debug: { msg: 'install {{ url }}' }
         - apt: { deb: '{{ url }}' }
           become: True
+
+    - apt: { name: libcanberra-gtk-module }
+      become: True
