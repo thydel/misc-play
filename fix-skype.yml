@@ -1,0 +1,35 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: all
+  gather_facts: False
+
+  vars:
+
+    name: skype-poll-fix
+    tmp: /tmp/{{ name }}
+    lib: /usr/local/lib
+
+  tasks:
+
+    - include: tasks/assert-desktop.yml
+    - include: tasks/assert-local-group.yml
+
+    - git:
+        repo: git@github.com:ValdikSS/{{ name }}.git
+        dest: '{{ tmp }}'
+
+    - command: cc -fPIC -shared -O2 -o {{ name }}.so {{ name }}.c -ldl
+      args:
+        chdir: '{{ tmp }}'
+        creates: '{{ name }}.so'
+
+    - file:
+        src: '{{ tmp }}/{{ name }}.so'
+        dest: '{{ lib }}/{{ name }}.so'
+
+    - set_fact:
+        todo:
+          replace: nohup "$SKYPE_PATH" --executed-from="$(pwd)" --pid=$$ "$@" > "$SKYPE_LOGS/skype-startup.log" 2>&1 &
+          by: nohup env LD_PRELOAD=/usr/local/lib/skype-poll-fix.so "$SKYPE_PATH" --executed-from="$(pwd)" --pid=$$ "$@" > "$SKYPE_LOGS/skype-startup.log" 2>&1 &
+          in: /usr/bin/skypeforlinux
