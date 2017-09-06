@@ -1,0 +1,140 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- name: &check_a_v Checks ansible version
+  hosts: all
+  gather_facts: False
+  tags: check-ansible-version
+  vars:
+    default_min_ansible_version: 2.4.0
+    local_min_ansible_version: '{{ min_ansible_version | default(default_min_ansible_version) }}'
+  tasks:
+    - fail:
+        msg: min ansible version is {{ local_min_ansible_version }}, ansible version is {{ ansible_version.string }}
+      when: ansible_version.string | version_compare(local_min_ansible_version, 'lt')
+      check_mode: False
+      run_once: True
+      delegate_to: localhost
+      tags: always
+      name: *check_a_v
+
+- name: Checks we are on deskstop and in staff group
+  hosts: localhost
+  gather_facts: False
+  tags: asserts
+  tasks:
+    - include_tasks: tasks/assert-{{ item }}.yml
+      with_items: [ desktop, local-group ]
+
+- name: Does not use jdauphant.vagrant
+  hosts: localhost
+  gather_facts: True
+  tasks:
+    - set_fact:
+        nope:
+          - import_role: { name: jdauphant.vagrant }
+            become: True
+
+- name: Defines YAML macros
+  hosts: localhost
+  gather_facts: False
+  vars:
+    macros:
+      ro: &ro
+        changed_when: False
+        check_mode: False
+
+- name: Gets and integrity checks Vagrant files
+  hosts: local
+  gather_facts: True
+  tags: get-vagrant-files
+
+  tasks:
+    
+    - tags: get-files
+      vars: &files
+        debdir: /usr/local/dist
+        version: 1.9.8
+        site: 'https://releases.hashicorp.com'
+        base: vagrant/{{version}}/vagrant_{{version}}
+        deb: '{{ base }}_{{ansible_architecture}}.deb'
+        sum: '{{ base }}_SHA256SUMS'
+        sig: '{{ sum }}.sig'
+        urls:
+          deb: '{{ site }}/{{ deb }}'
+          sum: '{{ site }}/{{ sum }}'
+          sig: '{{ site }}/{{ sig }}'
+        files:
+          deb: '{{ debdir }}/{{ deb | basename }}'
+          sum: '{{ debdir }}/{{ sum | basename }}'
+          sig: '{{ debdir }}/{{ sig | basename }}'
+      block:
+        - debug: { verbosity: 1, msg: 'get url {{ urls.deb }}' }
+        - file:
+            path: '{{ debdir }}'
+            group: staff
+            mode: g+ws
+          become: True
+          name: creates '{{ debdir }}'
+        - block:
+          - set_fact:
+              comment: |
+                See https://github.com/ansible/ansible/issues/25402
+          - get_url:
+              url: '{{ item }}'
+              dest: '{{ debdir }}'
+            with_dict: '{{ urls }}'
+            when: False
+            loop_control: &label { label: '{{ item.value | basename }}' }
+            name: get files using get_url
+        - command: curl -Os {{ item.value }}
+          args:
+            chdir: '{{ debdir }}'
+            creates: '{{ item.value | basename }}'
+          with_dict: '{{ urls }}'
+          loop_control: *label
+          name: get files using curl
+
+    - tags: get-key
+      vars:
+        key:
+          id: 51852D87348FFC4C
+          url: 'https://keybase.io/hashicorp/pgp_keys.asc'
+      block:
+        - debug: { verbosity: 1, msg: 'import Hashicorp GPG public key {{ key.id }}' }
+        - <<: *ro
+          command: gpg -k {{ key.id }}
+          register: gpg
+          failed_when: gpg.rc == 1
+          name: lists key
+        - command: gpg --receive-keys {{ key.id }}
+          when: gpg.rc == 2
+          name: receive key
+
+    - tags: check-files
+      vars: *files
+      block:
+        - debug: { verbosity: 1, msg: 'check Hashicorp files integrity' }
+        - <<: *ro
+          command: gpg --verify {{ files.sig }} {{ files.sum }}
+          name: verifies signed checksum file
+        - <<: *ro
+          command: grep {{ deb | basename }} {{ files.sum }}
+          register: grep
+          name: gets deb file checksum
+        - <<: *ro
+          command: shasum -a 256 -c
+          args:
+            chdir: '{{ debdir }}'
+            stdin: '{{ grep.stdout }}'
+          name: checks deb file checksum
+
+- name: Install Vagrant deb file
+  hosts: local
+  gather_facts: True
+  tags: install-vagrant-deb
+  tasks:
+    - vars: *files
+      apt: { deb: '{{ files.deb }}' }
+      become: True
+      name: install {{ files.deb | basename }}

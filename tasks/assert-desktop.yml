@@ -7,7 +7,7 @@
       - /usr/bin/mate-session
     a_desktop: 1
   block:
-    - debug: { msg: fail if not on a dektop node }
+    - debug: { verbosity: 1, msg: fail if not on a dektop node }
     - stat: { path: '{{ desktops[a_desktop] }}' }
       register: desktop
     - assert: { that: desktop.stat.exists is defined and desktop.stat.exists }

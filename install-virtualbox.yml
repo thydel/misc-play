@@ -1,0 +1,26 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: local
+  gather_facts: True
+  become: True
+
+  vars:
+    key_url: https://www.virtualbox.org/download/oracle_vbox_2016.asc
+    repo: deb http://download.virtualbox.org/virtualbox/debian stretch contrib
+
+  tasks:
+    
+    - include: tasks/assert-desktop.yml
+
+    - name: add VirtualBox public key
+      apt_key: { url: '{{ key_url }}' }
+    
+    - name: add VirtualBox repos
+      apt_repository: { repo: '{{ repo }}' }
+    
+    - name: install virtualbox-5.1
+      apt:
+        name: virtualbox-5.1
+        update_cache: True
+        cache_valid_time: 300

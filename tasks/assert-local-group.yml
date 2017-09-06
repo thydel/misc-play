@@ -3,7 +3,7 @@
 - tags: assert_local_group
   vars: { group: staff }
   block:
-    - debug: { msg: 'fail if invoking user ({{ ansible_ssh_user }}) not in group {{ group }}' }
+    - debug: { verbosity: 1, msg: 'fail if invoking user ({{ ansible_ssh_user }}) not in group {{ group }}' }
     - getent:
         database: group
         key: '{{ group }}'

@@ -19,3 +19,4 @@ vars/ext/
 inventory/*.ext
 inventory/group_vars/*/*-ext.yml
 vault-pass.py
+inventory/local
