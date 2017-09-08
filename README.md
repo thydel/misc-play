@@ -1,5 +1,9 @@
 # usage
 
+## Install VMware Workstation
+
+See [Install VMware Workstation](install-vmware-workstation.md)
+
 ## migrate to github
 
 ```bash

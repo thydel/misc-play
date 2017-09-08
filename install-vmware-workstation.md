@@ -67,7 +67,7 @@ def wrapIntegrityError(func):
 
 ## Fail to guess what debian package or lib could made the difference
 
-## But, found am advice to remove older version of same VMware product
+## But, found an advice to remove older version of same VMware product
 
 I never installed VMware Workstation, but I do insalled VMware Remote
 Console which is required by HTML5 VMware vSphere 6.5.
@@ -82,7 +82,7 @@ vmware-installer -l
 vmware-installer -u vmware-vmrc --required
 ```
 
-Then [install-vmware-workstation.yml]() will works.
+Then [install-vmware-workstation playbook](install-vmware-workstation.yml) will works.
 
 # Fail to install back VMware-Remote-Console
 
