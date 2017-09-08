@@ -2,8 +2,12 @@
 
 TD;DR
 
-Remote Console cannot be installed on the same virtual machine as
-VMware Workstation or VMware Workstation Player.
+[VMware Remote Console 10.0.1 Release Notes][] says
+
+	Remote Console cannot be installed on the same virtual machine as
+	VMware Workstation or VMware Workstation Player.
+
+(But that really means on the same **host** machine)
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc again -->
 **Table of Contents**
