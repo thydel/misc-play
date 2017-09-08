@@ -8,6 +8,7 @@ all   +=  ansible-galaxy install -r requirements.yml)
 role   = ansible-galaxy remove $@;
 role  += $(all)
 roles := regenerate-host-keys
+roles += geerlingguy.ansible-role-packer
 roles += geerlingguy.packer-debian
 roles += vmware-workstation
 roles += jdauphant.vagrant

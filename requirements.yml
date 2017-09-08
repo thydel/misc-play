@@ -4,6 +4,7 @@
   name: regenerate-host-keys
   version: master
 
+- src: geerlingguy.ansible-role-packer
 - src: geerlingguy.packer-debian
 
 - src: https://github.com/tompscanlan/ansible-role-vmware-workstation.git

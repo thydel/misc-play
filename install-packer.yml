@@ -1,0 +1,11 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: local
+  gather_facts: False
+
+  tasks:
+    
+    - include_tasks: tasks/assert-desktop.yml
+    - include_role: { name: geerlingguy.ansible-role-packer }
+      become: True
