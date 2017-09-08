@@ -5,6 +5,24 @@ TD;DR
 Remote Console cannot be installed on the same virtual machine as
 VMware Workstation or VMware Workstation Player.
 
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc again -->
+**Table of Contents**
+
+- [Fail on my primary workstation](#fail-on-my-primary-workstation)
+    - [Find error log file](#find-error-log-file)
+    - [Try on other context](#try-on-other-context)
+    - [Fail to guess what debian package or lib could made the difference](#fail-to-guess-what-debian-package-or-lib-could-made-the-difference)
+    - [But, found an advice to remove older version of same VMware product](#but-found-an-advice-to-remove-older-version-of-same-vmware-product)
+- [Remove VMware-Remote-Console and succeed to install VMware-Workstation](#remove-vmware-remote-console-and-succeed-to-install-vmware-workstation)
+- [Fail to install back VMware-Remote-Console](#fail-to-install-back-vmware-remote-console)
+- [Let's ensure we have the correct file](#lets-ensure-we-have-the-correct-file)
+- [It won't work and it's documented !](#it-wont-work-and-its-documented-)
+- [There is still some non blocking errors](#there-is-still-some-non-blocking-errors)
+- [Now, maybe we can have a VM with a browser and VMware-Remote-Console](#now-maybe-we-can-have-a-vm-with-a-browser-and-vmware-remote-console)
+
+<!-- markdown-toc end -->
+
+
 # Fail on my primary workstation
 
 Just tells `Installation failed, rolling back installation.` and exit.
@@ -110,7 +128,7 @@ VMware-Remote-Console-10.0.1-5898794.x86_64.bundle: OK
 
 # It won't work and it's documented !
 
-But I would say, impossible to find *before* you conclude yourself
+But I would say, impossible to find **before** you conclude yourself
 that those two VMware products may be incompatible and search for
 `VMware-Remote-Console VMware-Workstation incompatible` and find
 confirmation in [VMware Remote Console 9.0 Release Notes][] (we tried
@@ -126,7 +144,7 @@ correct [VMware Remote Console 10.0.1 Release Notes][])
 [VMware Remote Console 10.0.1 Release Notes]:
 	http://pubs.vmware.com/Release_Notes/en/vmrc/100/vmware-remote-console-1001-release-notes.html "http://pubs.vmware.com"
 
-# There is still some non blocking error
+# There is still some non blocking errors
 
 ```console
 thy@tde-ws:~$ vmware-installer -l
