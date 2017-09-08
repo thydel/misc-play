@@ -6,6 +6,8 @@
 
   tasks:
     
-    - include: tasks/assert-desktop.yml
-    - include_role: { name: vmware-workstation }
+    - include_tasks: tasks/assert-desktop.yml
+    - block:
+      - include_role: { name: vmware-workstation }
+      - command: vmware-modconfig --console --install-all
       become: True
