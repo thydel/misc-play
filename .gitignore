@@ -9,6 +9,7 @@ log
 tmp
 ext
 
+try.yml
 README.html
 plugins/filter/*.pyc
 

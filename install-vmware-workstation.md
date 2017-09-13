@@ -187,4 +187,26 @@ vmware-workstation             VMware Workstation                               
 vmware-installer               VMware Installer                                  2.1.0.5381180       
 ```
 
+# More workaround
+
+```console
+thy@tdeltd:~$ vmplayer
+Gtk-Message: Failed to load module "atk-bridge": /usr/lib/x86_64-linux-gnu/libatspi.so.0: undefined symbol: g_type_class_adjust_private_offset
+Gtk-Message: Failed to load module "canberra-gtk-module": libcanberra-gtk-module.so: cannot open shared object file: No such file or directory
+Gtk-Message: Failed to load module "atk-bridge": /usr/lib/x86_64-linux-gnu/libatspi.so.0: undefined symbol: g_type_class_adjust_private_offset
+Gtk-Message: Failed to load module "canberra-gtk-module": libcanberra-gtk-module.so: cannot open shared object file: No such file or directory
+thy@tdeltd:~$ echo $LD_LIBRARY_PATH
+
+thy@tdeltd:~$ export LD_LIBRARY_PATH=/usr/lib/vmware/lib/libatspi.so.0
+thy@tdeltd:~$ vmplayer
+Gtk-Message: Failed to load module "canberra-gtk-module": libcanberra-gtk-module.so: cannot open shared object file: No such file or directory
+Gtk-Message: Failed to load module "canberra-gtk-module": libcanberra-gtk-module.so: cannot open shared object file: No such file or directory
+thy@tdeltd:~$ apt-file search libcanberra-gtk-module.so
+libcanberra-gtk-module: /usr/lib/x86_64-linux-gnu/gtk-2.0/modules/libcanberra-gtk-module.so
+libcanberra-gtk3-module: /usr/lib/x86_64-linux-gnu/gtk-3.0/modules/libcanberra-gtk-module.so
+thy@tdeltd:~$ export LD_LIBRARY_PATH=/usr/lib/vmware/lib/libatspi.so.0:/usr/lib/x86_64-linux-gnu/gtk-2.0/modules
+thy@tdeltd:~$ vmplayer
+thy@tdeltd:~$ 
+```
+
 # Now, maybe we can have a VM with a browser and VMware-Remote-Console
