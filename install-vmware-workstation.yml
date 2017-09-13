@@ -9,5 +9,14 @@
     - include_tasks: tasks/assert-desktop.yml
     - block:
       - include_role: { name: vmware-workstation }
+      - block:
+          - command: uname -r
+            register: release
+            changed_when: False
+            check_mode: False
+          - stat: { path: '/lib/modules/{{ release.stdout }}/misc/vmmon.ko' }
+            register: mod
+        become: False
       - command: vmware-modconfig --console --install-all
+        when: not mod.stat.exists
       become: True
