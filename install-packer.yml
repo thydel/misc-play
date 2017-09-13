@@ -44,25 +44,28 @@
         changed_when: False
         check_mode: False
 
-- name: Gets and integrity checks Packer files
+- name: Gets and integrity checks Packer files then install Packer
   hosts: local
   gather_facts: True
   tags: get-packer-files
 
   tasks:
     
-    - set_fact:
+    - tags: always
+      set_fact:
         arch2ext:
           x86_64: amd64
+      name: defines arch2ext
 
     - tags: get-files
       vars: &files
         name: packer
-        version: 1.0.4
+        versions: [ 1.1.0, 1.0.4 ]
+        version: 0
         dist: /usr/local/dist
         bin: /usr/local/bin
         site: 'https://releases.hashicorp.com'
-        base: '{{ name }}/{{version}}/{{ name }}_{{version}}'
+        base: '{{ name }}/{{ versions[version] }}/{{ name }}_{{ versions[version] }}'
         zip: '{{ base}}_{{ ansible_system | lower }}_{{ arch2ext[ansible_architecture] }}.zip'
         sum: '{{ base}}_SHA256SUMS'
         sig: '{{ sum }}.sig'
@@ -136,8 +139,29 @@
           name: checks deb file checksum
 
     - tags: install-packer
-      vars: *files
-      unarchive:
-        src: '{{ files.zip }}'
-        dest: '{{ bin }}'
-        creates: '{{ bin }}/{{ name }}'
+      vars: { <<: *files, comma: ',', ne: ne }
+      block:
+        - stat: { path: &exe '{{ bin }}/{{ name }}' }
+          register: packer_exe
+          name: is packer already install ?
+        - <<: *ro
+          command: packer -machine-readable version
+          register: packer_version
+          when: packer_exe.stat.executable is defined and packer_exe.stat.executable
+          name: what is the version of installed packer ?
+        - set_fact:
+            current: '{{ packer_version.stdout_lines[0].split(comma)[3] }}'
+            requested: '{{ versions[version] }}'
+          when: packer_version is defined
+          name: defines versions
+        - block:
+            - debug: { verbosity: 1, msg: 'packer versions: current {{ current }}, requested {{ requested }}' }
+              name: shows versions
+            - file: { path: *exe, state: absent }
+              name: removes older packer version
+          when: packer_version is defined and current | version_compare(requested, ne)
+        - unarchive:
+            src: '{{ files.zip }}'
+            dest: '{{ bin }}'
+            creates: *exe
+          name: unarchives packer dist file
