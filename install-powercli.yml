@@ -1,0 +1,94 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: all
+  gather_facts: False
+  tags: powershell
+
+  vars:
+    key_url: https://packages.microsoft.com/keys/microsoft.asc
+    repo: deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-debian-stretch-prod stretch main
+    base: /opt/microsoft/powershell
+    version: 6.0.0-beta.9
+
+  tasks:
+
+    - name: Installs powershell meta deps
+      apt:
+        name: '{{ item }}'
+        update_cache: True
+        cache_valid_time: 300
+      with_items: curl gnupg apt-transport-https
+
+    - name: Adds Microsoft public key
+      apt_key: { url: '{{ key_url }}' }
+
+    - name: add Microsoft stretch repos
+      apt_repository: { repo: '{{ repo }}' }
+
+    - name: Installs powershell
+      apt: { name: powershell }
+
+    - name: Fixes issue 8951
+      apt:
+        name: libssl1.0.0
+        state: absent
+        purge: True
+      vars:
+        issue: https://github.com/dotnet/corefx/issues/8951
+        cite: |
+          Apparently dotnet tries to load any available libssl at
+          runtime and when both libcurl 7.52.1-5 (that pulls
+          libssl1.0.2) and libssl1.0.0 are present it chooses to load
+          the older one resulting in a segfault.
+
+    - name: Disables telemetry
+      file: '{{ base }}/{{ version }}/DELETE_ME_TO_DISABLE_CONSOLEHOST_TELEMETRY'
+      state: absent
+
+- hosts: all
+  gather_facts: False
+  tags: powercli
+
+  vars:
+    base: &base https://download3.vmware.com/software/vmw-tools/powerclicore
+    file: &file PowerCLI_Core.zip
+    url: [ *base, *file ]
+    modules: |-
+      {{ lookup('env', 'HOME') }}/.local/share/powershell/Modules
+
+  tasks:
+
+    - get_url:
+        url: '{{ url | join("/") }}'
+        dest: 'tmp/{{ file }}'
+      name: Gets '{{ file }}'
+
+    - file:
+        path: '{{ modules }}'
+        state: directory
+      name: Creates {{ modules }}
+
+    - unarchive:
+        src: 'tmp/{{ file }}'
+        dest: '{{ modules }}'
+      name: Unzip {{ file }}
+
+    - unarchive:
+        src: '{{ modules }}/PowerCLI.{{ item }}.zip'
+        dest: '{{ modules }}'
+      with_items: [ ViCore, Vds ]
+      name: Unzip secondary files
+
+    - command: pwsh -command -
+        stdin:
+          Get-Module -ListAvailable PowerCLI* | Import-Module
+          Set-PowerCLIConfiguration -InvalidCertificateAction Ignore
+      when: False
+      var:
+        comment: Could not load file or assembly
+          
+    - command: pwsh -command -
+        stdin:
+          Find-Module -Name VMware.PowerCLI
+          Install-Module -Name VMware.PowerCLI -Scope CurrentUser -Confirm:$False
