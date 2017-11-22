@@ -1,0 +1,9 @@
+https://my.vmware.com/group/vmware/details?downloadGroup=OVFTOOL420&productId=491#
+
+MD5SUM: 4f6e2afbcf72640cb5863bf3f60d575e 
+SHA1SUM: 92c1ac53d6dcbde362765b96800f547ddea7e2b6
+SHA256SUM: 5040dd9fc763fb4ea5324bce758e697064f636e3c0fb838c8f69c711400bdf7e
+
+Name: VMware-ovftool-4.2.0-5965791-lin.x86_64.bundle 
+Release Date: 2017-07-27
+Build Number: 5965791
