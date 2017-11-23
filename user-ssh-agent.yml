@@ -1,0 +1,39 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: localhost
+  gather_facts: False
+
+  vars:
+    service: user-ssh-agent
+
+  tasks:
+
+    - vars:
+        dir: |-
+          {{ lookup('env','HOME') + '/.config/systemd/user' }}
+      block:
+        - file:
+            path: '{{ dir }}'
+            state: directory
+        - copy:
+            dest: '{{ dir }}/{{ service }}.service'
+            content: |
+              [Unit]
+              Description=Local SSH key agent
+              
+              [Service]
+              Type=simple
+              Environment=SSH_AUTH_SOCK=%t/{{ service }}.socket
+              ExecStart=/usr/bin/ssh-agent -D -a $SSH_AUTH_SOCK
+              
+              [Install]
+              WantedBy=default.target
+    - systemd:
+        name: '{{ service }}'
+        user: True
+        enabled: True
+    - systemd:
+        name: '{{ service }}'
+        user: True
+        state: started
