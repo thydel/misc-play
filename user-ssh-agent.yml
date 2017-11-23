@@ -33,7 +33,11 @@
         name: '{{ service }}'
         user: True
         enabled: True
+      vars:
+        txt: systemctl --user enable user-ssh-agent
     - systemd:
         name: '{{ service }}'
         user: True
         state: started
+      vars:
+        txt: systemctl --user start user-ssh-agent
