@@ -1,0 +1,106 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- name: Creates a crypted part
+  hosts: localhost
+  gather_facts: False
+
+  vars:
+
+    macros:
+      - &suro
+        changed_when: False
+        check_mode: False
+        become: True
+      - &sunolo
+        become: True
+        no_log: True
+
+  tasks:
+
+      # dev is a block device partition file name in /dev
+      # partuuid is the partition uuid of dev
+      # cname is the name of crypted partition to appear in /dev/mapper
+      # pass is a passwordstore.org pass id
+
+    - assert: { that: dev is defined and partuuid is defined and cname is defined and pass is defined }
+      name: '"dev", "partuuid", "cname" and "pass" must be extra vars'
+
+      # warning using blkid on device without read access (forget to
+      # sudo) result in incorrect (obsolet) values instead of expected
+      # exit error
+
+    - command: blkid -s PARTUUID /dev/{{ dev }} -o value
+      register: blkid_partuuid
+      <<: *suro
+      name: 'get partuuid of "dev"'
+    - assert: { that: blkid_partuuid.stdout == partuuid }
+      name: 'match it to extra var "partuuid"'
+    - set_fact: { dev_by_uuid: '/dev/disk/by-partuuid/{{ partuuid }}' }
+      name: set dev by uuid path
+
+    - set_fact: { password: '{{ lookup("passwordstore", pass) }}' }
+      name: get password
+      # because module adds a LF to stdin
+    - set_fact: { password_length: '{{ password | length }}' }
+      name: get password length
+
+    - command: blkid -s TYPE /dev/{{ dev }} -o value
+      register: blkid_type
+      <<: *suro
+      name: get part type
+    - when: blkid_type.stdout != 'crypto_LUKS' or force is defined
+      command: cryptsetup -d - -l {{ password_length }} luksFormat {{ dev_by_uuid }}
+      args: { stdin: '{{ password }}' }
+      <<: *sunolo
+      name: 'format crypted part, possibly forced via "force" extra var'
+
+    - command: blkid -s UUID /dev/{{ dev }} -o value
+      register: blkid_uuid
+      <<: *suro
+      name: get crypted part uuid
+
+    - crypttab:
+        backing_device: UUID={{ blkid_uuid.stdout }}
+        name: '{{ cname }}'
+        opts: luks,noauto
+        state: present
+      become: True
+      when: False
+      name: '"crypttab" module do not work as expected'
+
+    - lineinfile:
+        path: /etc/crypttab
+        regexp: '{{ cname }} UUID='
+        line: |-
+          {{ cname }} UUID={{ blkid_uuid.stdout }} none luks,noauto
+      become: True
+      name: adds crypttab entry
+
+    - command: cryptsetup -d - -l {{ password_length }} open --type luks {{ dev_by_uuid }} {{ cname }}
+      args:
+        stdin: '{{ password }}'
+        creates: &crypted /dev/mapper/{{ cname }}
+      <<: *sunolo
+      name: open crypted part
+
+    - filesystem:
+        fstype: &fstype '{{ fstype | default("ext4") }}'
+        dev: *crypted
+      become: True
+      name: make filesystem on crypted part
+        
+    - mount:
+        path: &mount_point /mnt/{{ cname }}
+        src: *crypted
+        fstype: *fstype
+        opts: defaults,noauto,nodev,noatime,nodiratime,nosuid,noexec
+        state: present
+      become: True
+      name: adds fstab entry
+
+    - file:
+        path: *mount_point
+        state: directory
+      become: True
+      name: creates mount point
