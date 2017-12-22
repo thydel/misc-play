@@ -1,0 +1,48 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars:
+    macros:
+      - &ro
+        changed_when: False
+        check_mode: False
+      - &rolo
+        <<: *ro
+        delegate_to: localhost
+        run_once: True
+
+- hosts: all
+  gather_facts: False
+
+  vars:
+
+    env_vars: [ USER, SHELL ]
+    envs: |
+      {
+        {% for var in env_vars %}
+          '{{ var }}': '{{ lookup("env", var) }}',
+        {% endfor %}
+      }
+
+  tasks:
+
+    - command: id -un
+      register: user
+      <<: *rolo
+      name: Gets user login
+
+    - command: git config --get user.name
+      register: name
+      <<: *rolo
+      name: Gets user name
+
+    - user:
+        name: '{{ user.stdout }}'
+        shell: '{{ envs.SHELL }}'
+        comment: '{{ name.stdout }}'
+      become: True
+      name: Create user
