@@ -40,9 +40,42 @@
       <<: *rolo
       name: Gets user name
 
+    - command: mkpasswd -sm sha-512
+      args:
+        stdin: "{{ lookup('passwordstore', 'node/' ~ envs.USER ~ '@' ~ inventory_hostname ) }}"
+      register: mkpasswd
+      <<: *rolo
+      name: Generates encrypted password
+
     - user:
-        name: '{{ user.stdout }}'
+        name: &user '{{ user.stdout }}'
+        password: '{{ mkpasswd.stdout }}'
+        update_password: on_create
         shell: '{{ envs.SHELL }}'
         comment: '{{ name.stdout }}'
       become: True
       name: Create user
+
+    - command: ssh-add -L
+      register: keys
+      <<: *rolo
+      name: Gets user keys
+
+    - authorized_key:
+        user: *user
+        key: '{{ item }}'
+      with_items: '{{ keys.stdout_lines }}'
+      name: Adds user keys
+
+    - command: getent group staff
+      register: getent
+      <<: *ro
+      failed_when: getent.rc == 1 or getent.rc == 3
+      name: Checks staff group
+
+    - user:
+        name: *user
+        groups: staff
+        append: True
+      when: getent.stdout_lines | count
+      name: Puts user in staff group
