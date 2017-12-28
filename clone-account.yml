@@ -53,6 +53,8 @@
         update_password: on_create
         shell: '{{ envs.SHELL }}'
         comment: '{{ name.stdout }}'
+        groups: sudo
+        append: True
       become: True
       name: Create user
 
