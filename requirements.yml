@@ -15,3 +15,7 @@
 - src: https://github.com/thydel/ar-sudoersd.git
   name: sudoersd
   version: master
+
+- src: willshersystems.sshd
+  name: sshd
+  version: master

@@ -13,6 +13,7 @@ roles += geerlingguy.packer-debian
 roles += vmware-workstation
 roles += jdauphant.vagrant
 roles += sudoersd
+roles += sshd
 
 all:; $($@)
 $(roles):; $(role)
