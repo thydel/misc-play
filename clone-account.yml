@@ -4,6 +4,7 @@
 - hosts: localhost
   connection: local
   gather_facts: False
+  name: Sets macros
 
   vars:
     macros:
@@ -15,11 +16,6 @@
         delegate_to: localhost
         run_once: True
 
-- hosts: all
-  gather_facts: False
-
-  vars:
-
     env_vars: [ USER, SHELL ]
     envs: |
       {
@@ -28,31 +24,53 @@
         {% endfor %}
       }
 
+- hosts: all
+  gather_facts: True
+  name: Clones user account
+
   tasks:
 
     - command: id -un
-      register: user
+      register: id
       <<: *rolo
       name: Gets user login
 
     - command: git config --get user.name
-      register: name
+      register: git
       <<: *rolo
       name: Gets user name
 
+    - set_fact:
+        user: '{{ id.stdout }}'
+        name: '{{ git.stdout }}'
+        shell: '{{ ansible_env.SHELL }}'
+      <<: *rolo
+      name: Gets user SHELL
+
+    - set_fact:
+        password: |-
+          {{ lookup('passwordstore', base | default('node') ~ '/' ~ user ~ '@' ~ inventory_hostname ) }}
+      no_log: True
+      <<: *rolo
+      name: Gets user password
+
     - command: mkpasswd -sm sha-512
-      args:
-        stdin: "{{ lookup('passwordstore', 'node/' ~ envs.USER ~ '@' ~ inventory_hostname ) }}"
+      args: { stdin: '{{ password }}' }
       register: mkpasswd
       <<: *rolo
       name: Generates encrypted password
 
+    - set_fact: { ansible_become_pass: '{{ password }}' }
+      no_log: True
+      when: ansible_user is not defined or ansible_user != 'root'
+      name: Sets ansible_become_pass
+
     - user:
-        name: &user '{{ user.stdout }}'
-        password: '{{ mkpasswd.stdout }}'
+        name: &user '{{ user }}'
+        password: '{{ password }}'
         update_password: on_create
-        shell: '{{ envs.SHELL }}'
-        comment: '{{ name.stdout }}'
+        shell: '{{ shell }}'
+        comment: '{{ name }}'
         groups: sudo
         append: True
       become: True
@@ -67,6 +85,8 @@
         user: *user
         key: '{{ item }}'
       with_items: '{{ keys.stdout_lines }}'
+      loop_control: { label: '{{ item.split(" ")[2] }}' }
+      become: True
       name: Adds user keys
 
     - command: getent group staff
@@ -80,4 +100,5 @@
         groups: staff
         append: True
       when: getent.stdout_lines | count
+      become: True
       name: Puts user in staff group
