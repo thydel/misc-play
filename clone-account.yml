@@ -49,9 +49,10 @@
 
     - set_fact:
         password: |-
-          {{ lookup('passwordstore', base | default('node') ~ '/' ~ user ~ '@' ~ inventory_hostname ) }}
+          {{ lookup('passwordstore', passwordstore_prefix ~ '/' ~ user ~ '@' ~ inventory_hostname ) }}
       no_log: True
       <<: *rolo
+      vars: { passwordstore_prefix: '{{ psp | default("node") }}' }
       name: Gets user password
 
     - command: mkpasswd -sm sha-512
