@@ -1,0 +1,105 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: localhost
+  connection: local
+  gather_facts: False
+  name: Sets macros
+
+  vars:
+    macros:
+      - &ro
+        changed_when: False
+        check_mode: False
+      - &rolo
+        <<: *ro
+        delegate_to: localhost
+        run_once: True
+      - &hg
+        chdir: /etc
+        warn: False
+
+- hosts: all
+  gather_facts: False
+  name: Inits etc/.hg
+
+  vars: { passwordstore_prefix: '{{ psp | default("node") }}' }
+
+  tasks:
+
+    - set_fact: { user: '{{ ansible_user | default(ansible_user_id) }}' }
+      delegate_to: localhost
+      run_once: True
+      name: Gets user
+
+    - set_fact:
+        ansible_become_pass: |-
+          {{ lookup('passwordstore', passwordstore_prefix ~ '/' ~ user ~ '@' ~ inventory_hostname ) }}
+      no_log: True
+
+    - apt: { name: mercurial }
+      become: True
+      name: Installs mercurial
+
+    - command: hg init
+      args: { <<: *hg, creates: .hg }
+      register: init
+      become: True
+      name: Inits repo
+
+    - stat: { path: /etc/.hg }
+      register: dot_hg
+      name: Registers .hg
+
+    - command: hg id
+      args: *hg
+      register: id
+      when: &initp dot_hg.stat.isdir is defined and dot_hg.stat.isdir
+      become: True
+      <<: *ro
+      name: Registers id
+
+    - command: git config --get user.name
+      register: git_user_name
+      <<: *rolo
+      name: Gets user name
+
+    - command: git config --get user.email
+      register: git_user_email
+      <<: *rolo
+      name: Gets user email
+
+    - copy:
+        content: |
+          # -*- Mode: conf; -*-
+          # Ansible managed
+
+          [ui]
+          username = {{ git_user_name.stdout ~ space ~ inf ~ git_user_email.stdout ~ sup }}
+        dest: /etc/.hg/hgrc
+      vars: { inf: '<', sup: '>', space: ' ' }
+      when: *initp
+      become: True
+      name: Creates hgrc
+
+    - command: hg add
+      args: *hg
+      when: &idis [ *initp, 'id.stdout.split()[0] == idis' ]
+      vars: { idis: '000000000000' }
+      become: True
+      name: Adds everything
+
+    - command: hg id
+      args: *hg
+      register: id
+      when: *initp
+      become: True
+      <<: *ro
+      name: Registers id after add
+
+    - command: hg com -m 'First commit'
+      args: *hg
+      when: *idis
+      vars: { idis: '000000000000+' }
+      become: True
+      name: Makes first commit
