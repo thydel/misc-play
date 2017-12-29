@@ -1,0 +1,25 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: all
+  gather_facts: True
+  name: Confire sudoers to keep HOME
+
+  vars: { passwordstore_prefix: '{{ psp | default("node") }}' }
+
+  pre_tasks:
+    - set_fact: { user: '{{ ansible_user | default(ansible_user_id) }}' }
+      delegate_to: localhost
+      run_once: True
+      name: Gets user
+      
+  roles:
+    - role: sudoersd
+      model: userdef
+      users:
+        - name: &user '{{ user }}'
+          env_keep: [ HOME ]
+      file: *user
+      become: True
+      ansible_become_pass: |-
+        {{ lookup('passwordstore', passwordstore_prefix ~ '/' ~ user ~ '@' ~ inventory_hostname ) }}
