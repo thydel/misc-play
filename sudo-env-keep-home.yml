@@ -3,7 +3,7 @@
 
 - hosts: all
   gather_facts: True
-  name: Confire sudoers to keep HOME
+  name: Configures sudoers to keep HOME
 
   vars: { passwordstore_prefix: '{{ psp | default("node") }}' }
 
