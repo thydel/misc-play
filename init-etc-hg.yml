@@ -51,7 +51,8 @@
       register: dot_hg
       name: Registers .hg
 
-    - command: hg id
+    - &hgid
+      command: hg id
       args: *hg
       register: id
       when: &initp dot_hg.stat.isdir is defined and dot_hg.stat.isdir
@@ -89,13 +90,7 @@
       become: True
       name: Adds everything
 
-    - command: hg id
-      args: *hg
-      register: id
-      when: *initp
-      become: True
-      <<: *ro
-      name: Registers id after add
+    - *hgid
 
     - command: hg com -m 'First commit'
       args: *hg
