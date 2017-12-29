@@ -11,3 +11,7 @@
   name: vmware-workstation
 
 - src: jdauphant.vagrant
+
+- src: https://github.com/thydel/ar-sudoersd.git
+  name: sudoersd
+  version: master

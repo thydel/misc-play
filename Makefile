@@ -12,6 +12,7 @@ roles += geerlingguy.ansible-role-packer
 roles += geerlingguy.packer-debian
 roles += vmware-workstation
 roles += jdauphant.vagrant
+roles += sudoersd
 
 all:; $($@)
 $(roles):; $(role)
