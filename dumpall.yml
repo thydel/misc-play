@@ -7,7 +7,7 @@
 
   tasks:
     - copy:
-        content: |
+        content: &content |
           # vars
           {{ vars | to_nice_yaml }}
           # group_names
@@ -16,4 +16,13 @@
           {{ groups | to_nice_yaml }}
           # hostvars
           {{ hostvars | to_nice_yaml }}
-        dest: '{{ playbook_dir ~ "/tmp/dump.yml" }}'
+        dest: '{{ playbook_dir ~ "/tmp/dump-local.yml" }}'
+
+- hosts: '!localhost'
+  gather_facts: True
+
+  tasks:
+    - copy:
+        content: *content
+        dest: '{{ playbook_dir ~ "/tmp/dump-all.yml" }}'
+      delegate_to: localhost
