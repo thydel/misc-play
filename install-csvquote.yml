@@ -1,0 +1,24 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: localhost
+  gather_facts: True
+
+  tasks:
+
+    - include_tasks: tasks/assert-local-group.yml
+      when: &debian ansible_distribution == 'Debian'
+
+    - file: { path: tmp, state: directory }
+      name: mkdir tmp
+    - git: { repo: 'https://github.com/dbro/csvquote.git', dest: tmp/csvquote }
+      name: clone csvquote
+    - make: { chdir: tmp/csvquote }
+      name: make csvquote
+    - make: &make { chdir: tmp/csvquote, target: install }
+      when: *debian
+      name: &install install csvquote (not idempotent)
+    - make: *make
+      become: True
+      when: ansible_distribution != 'Debian'
+      name: *install
