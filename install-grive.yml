@@ -1,0 +1,37 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- name: Defines YAML macros
+  hosts: localhost
+  gather_facts: False
+  vars:
+    macros:
+      - &mkdir
+        file: { path: '{{ item }}', state: directory }
+        name: mkdir '{{ item }}'
+
+- hosts: localhost
+  gather_facts: True
+
+  tasks:
+
+    - apt: { name: '{{ item }}' }
+      with_flattened:
+        - [ git, cmake, build-essential, libgcrypt11-dev, libyajl-dev ]
+        - [ libboost-all-dev, libcurl4-openssl-dev, libexpat1-dev ]
+        - [ libcppunit-dev, binutils-dev, debhelper, zlib1g-dev, dpkg-dev ]
+        - [ pkg-config ]
+      become: True
+      name: install deps
+
+    - { <<: *mkdir, with_items: [ tmp ] }
+    - git: { repo: 'https://github.com/vitalif/grive2.git', dest: tmp/grive2 }
+      name: clone grive2
+    - { <<: *mkdir, with_items: [ &build tmp/grive2/build ] }
+    - command: cmake ..
+      args: { chdir: *build, creates: Makefile }
+      name: cmake
+    - { make: { chdir: *build }, name: make }
+    - make: { chdir: *build, target: install }
+      become: True
+      name: make install
