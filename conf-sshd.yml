@@ -1,0 +1,37 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- name: Defines YAML macros
+  hosts: localhost
+  gather_facts: False
+  vars:
+    macros:
+      - &ro
+        changed_when: False
+        check_mode: False
+      - &lo
+        run_once: True
+        delegate_to: localhost
+
+- hosts: all
+  gather_facts: False
+  name: Configures sshd
+
+  pre_tasks:
+
+    - name: Sees if we already switched to template
+      register: grep
+      <<: *ro
+      failed_when: grep.rc > 1
+      command: grep 'Ansible managed' /etc/ssh/sshd_config
+        
+    - name: Copies old conf when switching
+      when: grep.rc == 1
+      command: cp -p sshd_config sshd_config.old
+      args: { chdir: /etc/ssh, creates: sshd_config.old }
+
+  roles:
+
+    - { role: hg-etc-com, com: before applying sshd role }
+    - { role: sshd, sshd: '{{ sshd_params }}' }
+    - { role: hg-etc-com, com: after applying sshd role }
