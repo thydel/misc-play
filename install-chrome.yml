@@ -1,36 +1,54 @@
 #!/usr/bin/env ansible-playbook
 ---
 
-- hosts: all
-  gather_facts: True
-
+- name: Defines YAML macros
+  hosts: localhost
+  gather_facts: False
   vars:
-    url: https://dl-ssl.google.com/linux/linux_signing_key.pub
-    repo: deb http://dl.google.com/linux/chrome/deb/ stable main
+    macros:
+      - &self
+        gather_facts: True
 
-  tasks:
-    
-    - name: see if on dektop
-      stat: { path: /usr/bin/mate-about }
-      register: mate
+        vars:
+          url: https://dl-ssl.google.com/linux/linux_signing_key.pub
+          repo: deb http://dl.google.com/linux/chrome/deb/ stable main
 
-    - name: avoid flood
-      assert: { that: mate.stat.exists is defined and mate.stat.exists }
+        tasks:
 
-    - name: add google key
-      apt_key: { url: '{{ url }}' }
-    
-    - name: add chrome repos
-      apt_repository: { repo: '{{ repo }}' }
-    
-    - name: install chrome stable version
-      apt:
-        name: google-chrome-stable
-        update_cache: True
-        cache_valid_time: 300
-    
-    # installing goole-chrome auto add /etc/apt/sources.list.d/google-chrome.list
-    - name: fix duplicate sources list
-      file:
-        path: /etc/apt/sources.list.d/dl_google_com_linux_chrome_deb.list
-        state: absent
+          - name: see if on dektop
+            stat: { path: /usr/bin/mate-about }
+            register: mate
+
+          - name: avoid flood
+            assert: { that: mate.stat.exists is defined and mate.stat.exists }
+
+          - name: add google key
+            apt_key: { url: '{{ url }}' }
+
+          - name: add chrome repos
+            apt_repository: { repo: '{{ repo }}' }
+
+          - name: install chrome stable version
+            apt:
+              name: google-chrome-stable
+              update_cache: True
+              cache_valid_time: 300
+
+          # installing goole-chrome auto add /etc/apt/sources.list.d/google-chrome.list
+          - name: check if chrome installed
+            stat:
+              path: /etc/apt/sources.list.d/google-chrome.list
+            register: st
+          - name: fix duplicate sources list
+            file:
+              path: /etc/apt/sources.list.d/dl_google_com_linux_chrome_deb.list
+              state: absent
+            when: st.stat.exists
+
+- hosts: 'all:!localhost'
+  <<: *self
+
+- hosts: localhost
+  connection: local
+  become: True
+  <<: *self
