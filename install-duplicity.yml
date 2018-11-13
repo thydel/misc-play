@@ -23,7 +23,6 @@
         url: '{{ url | replace(" ", "") }}'
         dest: '{{ playbook_dir }}/tmp'
       delegate_to: localhost
-      when: False
 
     - name: Make tmp dir
       file:
@@ -49,7 +48,7 @@
 
     - name: Install deps
       apt:
-        name: [ gcc, python-dev, python-fasteners, librsync-dev ]
+        name: [ gcc, python-dev, python-setuptools, python-fasteners, librsync-dev ]
       become: True
 
     - name: Install

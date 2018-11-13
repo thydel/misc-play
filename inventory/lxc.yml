@@ -1,0 +1,12 @@
+---
+
+all:
+  children:
+    g_lxc:
+      hosts:
+        stretch:
+      vars:
+        ansible_become_pass: |
+          {{ lookup('passwordstore', 'lxc/' + lookup('env','USER') + '@lxc') }}
+
+# all: { children: { g_lxc: { hosts: { stretch: }, vars: { ansible_become_pass: "{{ lookup('passwordstore', 'lxc/' + lookup('env','USER') + '@lxc') }}" }}}}
