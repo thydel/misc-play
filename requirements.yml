@@ -19,3 +19,7 @@
 - src: willshersystems.sshd
   name: sshd
   version: master
+
+- src: paluh.augeas
+  name: augeas
+  version: master
