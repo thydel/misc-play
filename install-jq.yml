@@ -6,24 +6,30 @@
   vars:
 
     repo: https://github.com/stedolan/jq.git
+    version: jq-1.6
     basedir: tmp/jq
+    install: /usr/local/bin/jq
+    force: NIL
     deps:
       - [ autoconf, autoconf-archive, autoconf-doc, automake, autotools-dev ]
       - [ build-essential, g++, gettext, gnu-standards, libtool ]
     commands:
-      - [ autoreconf, autoreconf -i,                         Makefile.in,       False ]
-      - [ configue,   ./configure --disable-maintainer-mode, config.log,        False ]
-      - [ make,       make,                                  jq,                False ]
-      - [ install,    make install,                          /usr/local/bin/jq, True ]
+      - [ submodule,  git submodule update --init,           ../jq.submodule,   False ]
+      - [ submodule,  touch ../jq.submodule,                 ../jq.submodule,   False ]
+      - [ autoreconf, autoreconf -fi,                        Makefile.in,       False ]
+      - [ configue,   ./configure --with-oniguruma=builtin,  config.log,        False ]
+      - [ patch,      sed -ie '/python/s//&3/' Makefile,     ../jq.patch,       False ]
+      - [ patch,      touch ../jq.patch,                     ../jq.patch,       False ]
+      - [ make,       make -j8,                              jq,                False ]
+      - [ install,    make install,                          '{{ force }}',     True ]
 
   tasks:
 
-    - git: { repo: '{{ repo }}', dest: '{{ basedir }}' }
+    - git: { repo: '{{ repo }}', version: '{{ version }}', dest: '{{ basedir }}' }
       name: get sources
       tags: git
 
-    - apt: { name: '{{ item }}' }
-      with_flattened: '{{ deps }}'
+    - apt: { name: '{{ deps | flatten }}' }
       become: True
       name: install dependencies
       tags: apt
@@ -35,6 +41,7 @@
       args:
         chdir: '{{ basedir }}'
         creates: '{{ item[2] }}'
+        warn: False
       tags: install
       name: configure compile and install jq
 
