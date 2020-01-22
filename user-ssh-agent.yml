@@ -29,15 +29,21 @@
               
               [Install]
               WantedBy=default.target
+    - command: systemctl --user --no-legend list-unit-files user-ssh-agent.service
+      changed_when: False
+      register: systemctl
+    - debug: { var: systemctl }
+      when: False
     - systemd:
         name: '{{ service }}'
-        user: True
+        scope: user
         enabled: True
       vars:
         txt: systemctl --user enable user-ssh-agent
     - systemd:
         name: '{{ service }}'
-        user: True
+        scope: user
         state: started
       vars:
         txt: systemctl --user start user-ssh-agent
+    - meta: end_play
