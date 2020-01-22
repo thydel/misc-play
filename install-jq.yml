@@ -25,8 +25,13 @@
 
   tasks:
 
+    - stat: { path: '{{ basedir }}' }
+      register: stat_basedir
+      name: stat sources
+
     - git: { repo: '{{ repo }}', version: '{{ version }}', dest: '{{ basedir }}' }
       name: get sources
+      when: stat_basedir.stat.exists is not defined
       tags: git
 
     - apt: { name: '{{ deps | flatten }}' }
