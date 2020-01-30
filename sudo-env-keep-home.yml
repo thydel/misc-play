@@ -5,7 +5,7 @@
   gather_facts: True
   name: Configures sudoers to keep HOME
 
-  vars: { passwordstore_prefix: '{{ psp | default("node") }}' }
+# vars: { passwordstore_prefix: '{{ psp | default("node") }}' }
 
   pre_tasks:
     - set_fact: { user: '{{ ansible_user | default(ansible_user_id) }}' }
@@ -21,5 +21,5 @@
           env_keep: [ HOME ]
       file: *user
       become: True
-      ansible_become_pass: |-
-        {{ lookup('passwordstore', passwordstore_prefix ~ '/' ~ user ~ '@' ~ inventory_hostname ) }}
+#     ansible_become_pass: |-
+#       {{ lookup('passwordstore', passwordstore_prefix ~ '/' ~ user ~ '@' ~ inventory_hostname ) }}
