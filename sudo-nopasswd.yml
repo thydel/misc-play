@@ -3,6 +3,7 @@
 
 - hosts: all
   gather_facts: True
+  become: True
   name: Use group {{ group }} to sudo without password
 
   vars:
