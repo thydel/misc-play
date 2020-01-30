@@ -1,0 +1,35 @@
+#!/usr/bin/env ansible-playbook
+---
+
+- hosts: all
+  gather_facts: True
+  name: Use group {{ group }} to sudo without password
+
+  vars:
+    user: '{{ ansible_user | default(ansible_user_id) }}'
+    group: sudo-nopasswd
+    
+  tasks:
+
+    - group:
+        name: '{{ group }}'
+        system: True
+      name: Declares a system group {{ group }}
+
+    - user:
+        name: '{{ user }}'
+        groups: '{{ group }}'
+        append: True
+      name: Declares user {{ user }} in group {{ group }}
+
+    - copy:
+        dest: '{{ file }}'
+        content: '{{ line }}'
+        mode: '0440'
+        validate: /usr/sbin/visudo -csf %s
+      become: True
+      vars:
+        file: /etc/sudoers.d/{{ group }}
+        line: |
+          %sudo-nopasswd ALL=(ALL:ALL) NOPASSWD:ALL
+      name: 'Declares "{{ line | trim }}" in "{{ file }}"'
